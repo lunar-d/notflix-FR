@@ -1,35 +1,38 @@
-<h1 align="center">NOTFLIX</h1>
-<p align="center">f@#k netflix use notflix a tool which search magnet links and stream it with webtorrent</p>
+<h1 align="center">NOTFLIX Baguette 🇫🇷🥖</h1>
+<p align="center">Utiliser la version française de notflix pour voir les prochains films avec Kev Adams 🍷</p>
 
 ##
 <p align="center">
 <img src="./preview.gif" alt="Video Preview" width="500px">
 </p>
 
-> Watch my video on this - [bugswriter's notflix](https://youtu.be/RFJCL9C46Mc)
+> [la vidéo de bugswriter's](https://youtu.be/RFJCL9C46Mc)
 
-### How does this work?
+### Mais Jamy comment ça marche ?
 
-This is a shell script. It scrapes 1337x and gets the magnet link.
-After this it uses [webtorrent](https://webtorrent.io/) to stream the video from the magnet link.
-For scraping, the script uses simple gnu utils like sed, awk, paste, cut.
+C’est simple, il s’agit un script shell. Il extrait les infos de **oxtorrent** et trouve le lien *magnet*.
+Ensuite, il utilise [webtorrent](https://webtorrent.io/) pour diffuser la vidéo à partir du lien.
+Pour l'extraction, le script utilise des utilitaires gnu simples (sed, awk, paste, cut) mais aussi xmllint.
 
-## Requirements
+## Les truc nécessaires
 
-* [webtorrent](https://webtorrent.io/) - A tool to stream torrent. `npm install webtorrent-cli -g`
+* [webtorrent-cli](https://webtorrent.io) - Un client de streaming peer-to-peer.
+* [libxml](http://www.xmlsoft.org) - Bibliothèque utilisée pour analyser les fichiers XML.
+* [dmenu](https://webtorrent.io/) - Un menu dynamique pour X.
+* [Du pain](https://youtu.be/biRzNHnvoC0?t=22).
 
-## Installation
+## L'Installation
 
-### cURL
-cURL **notflix** to your **$PATH** and give execute permissions.
+### Avec cURL
+Télécharger **notflix-fr** avec cURL dans votre **$PATH** et autoriser l'exécution.
 
 ```sh
-$ sudo curl -sL "https://raw.githubusercontent.com/Bugswriter/notflix/master/notflix" -o /usr/local/bin/notflix
-$ sudo chmod +x /usr/local/bin/notflix
+$ sudo curl -sL "https://raw.githubusercontent.com/lunar-d/notflixFR/master/notflix" -o /usr/local/bin/notflix-fr
+$ sudo chmod +x /usr/local/bin/notflix-fr
 ```
-- To update, just do `curl` again, no need to `chmod` anymore.
-- To uninstall, simply remove `notflix` from your **$PATH**, for example `sudo rm -f /usr/local/bin/notflix.
+- Pour mettre à jour, il suffit de refaire `curl`, plus besoin de `chmod`.
+- Pour désinstaller, supprimez simplement `notflix-fr` de votre **$PATH** (`sudo rm -f /usr/local/bin/notflix-fr.`)
 
-## License
-This project is licensed under [GPL-3.0](https://raw.githubusercontent.com/Illumina/licenses/master/gpl-3.0.txt).
+## La licence
+Ce projet est sous la licence publique générale GNU [GPL-3.0](http://www.gnu.org/licenses/gpl-3.0.txt).
 
