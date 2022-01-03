@@ -18,8 +18,8 @@ Pour l'extraction, le script utilise des utilitaires gnu simples (sed, awk, past
 
 * [webtorrent-cli](https://webtorrent.io) - Un client de streaming peer-to-peer.
 * [libxml](http://www.xmlsoft.org) - Bibliothèque utilisée pour analyser les fichiers XML.
-* [dmenu](https://webtorrent.io/) - Un menu dynamique pour X.
-* [Du pain](https://youtu.be/biRzNHnvoC0?t=22).
+* [dmenu](https://tools.suckless.org/dmenu/) - Un menu dynamique pour X.
+* [Du pain](https://youtu.be/biRzNHnvoC0?t=22)...
 
 ## L'Installation
 
