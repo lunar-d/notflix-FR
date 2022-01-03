@@ -1,49 +1,54 @@
 #!/bin/sh
 
-# Dependencies - webtorrent, mpv
+# Les dependences - webtorrent, dmenu, libxml
 
-mkdir -p $HOME/.cache/notflix
+mkdir -p $HOME/.cache/notflix-fr
+
+# Marre des changements de domaine... je le recup ici
+updatedomain=$(curl -s "https://supports-oxtorrent.com" | grep -o '<span style="color:red;">.*</span>' | sed 's/<[^>]*>//g')
 
 menu="dmenu -i -l 25"
-baseurl="https://1337x.wtf"
-cachedir="$HOME/.cache/notflix"
+baseurl="https://www.$updatedomain"
+cachedir="$HOME/.cache/notflix-fr"
+useragent="Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0"
 
 if [ -z $1 ]; then
-  query=$(dmenu -p "Search Torrent: " <&-)
+  query=$(dmenu -p "Recherche 📽: " <&-)
 else
   query=$1
 fi
 
 query="$(echo $query | sed 's/ /+/g')"
+curl -A $useragent -s $baseurl/recherche/$query > $cachedir/tmp.html
 
-#curl -s https://1337x.to/category-search/$query/Movies/1/ > $cachedir/tmp.html
-curl -s $baseurl/search/$query/1/ > $cachedir/tmp.html
+# je recup que la table des torrents
+xmllint --html --xpath '//tr' $cachedir/tmp.html > $cachedir/tmplinks.html 2>/dev/null
 
-# Get Titles
-grep -o '<a href="/torrent/.*</a>' $cachedir/tmp.html |
+# Les titres
+grep -o '<a href="/torrent/.*</a>' $cachedir/tmplinks.html |
   sed 's/<[^>]*>//g' > $cachedir/titles.bw
 
 result_count=$(wc -l $cachedir/titles.bw | awk '{print $1}')
 if [ "$result_count" -lt 1 ]; then
-  notify-send "😔 No Result found. Try again 🔴" -i "NONE"
+  notify-send "😔 Pas de torrents disponibles correspondant à votre recherche." -i "NONE"
   exit 0
 fi
 
-# Seeders and Leechers
-grep -o '<td class="coll-2 seeds.*</td>\|<td class="coll-3 leeches.*</td>' $cachedir/tmp.html |
+# Seeders / Leechers
+grep -o '<td .* alt="seeders"/>.*</td>\|<td .* alt="leechers"/>.*</td>' $cachedir/tmplinks.html |
   sed 's/<[^>]*>//g' | sed 'N;s/\n/ /' > $cachedir/seedleech.bw
 
-# Size
-grep -o '<td class="coll-4 size.*</td>' $cachedir/tmp.html |
+# La taille du fichier
+grep -o '<td width="11%" align="left">.*</td>' $cachedir/tmplinks.html |
   sed 's/<span class="seeds">.*<\/span>//g' |
   sed -e 's/<[^>]*>//g' > $cachedir/size.bw
 
-# Links
-grep -E '/torrent/' $cachedir/tmp.html |
-  sed -E 's#.*(/torrent/.*)/">.*/#\1#' |
-  sed 's/td>//g' > $cachedir/links.bw
+# Les liens
+grep -E '/torrent/' $cachedir/tmplinks.html > $cachedir/links.html
+xmllint --html --xpath '//a/@href' $cachedir/links.html > $cachedir/linkshref.bw 2>/dev/null
+sed 's/ href=//g' $cachedir/linkshref.bw | sed 's/"//g' > $cachedir/links.bw
 
-# Clearning up some data to display
+# Nettoyage de certaines informations à afficher
 sed 's/\./ /g; s/\-/ /g' $cachedir/titles.bw |
   sed 's/[^A-Za-z0-9 ]//g' | tr -s " " > $cachedir/tmp && mv $cachedir/tmp $cachedir/titles.bw
 
@@ -57,18 +62,17 @@ LINE=$(paste -d\   $cachedir/size.bw $cachedir/seedleech.bw $cachedir/titles.bw 
   awk '{$1=$1; print}')
 
 if [ -z "$LINE" ]; then
-  notify-send "😔 No Result selected. Exiting... 🔴" -i "NONE"
+  notify-send "A la prochaine..." -i "NONE"
   exit 0
 fi
-notify-send "🔍 Searching Magnet seeds 🧲" -i "NONE"
+notify-send "🔍 Recherche du lien Magnet et lancement." -i "NONE"
 url=$(head -n $LINE $cachedir/links.bw | tail -n +$LINE)
-fullURL="${baseurl}${url}/"
+fullURL="${baseurl}${url}"
 
-# Requesting page for magnet link
-curl -s $fullURL > $cachedir/tmp.html
-magnet=$(grep -Po "magnet:\?xt=urn:btih:[a-zA-Z0-9]*" $cachedir/tmp.html | head -n 1) 
+# Recherche du lien magnet
+echo $fullURL
+curl -A "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0" -s $fullURL > $cachedir/tmpmagnet.html
+magnet=$(grep -Po "magnet:\?xt=urn:btih:[0-9a-fA-F]{40,}.*(?=';)" $cachedir/tmpmagnet.html | head -n 1) 
 
-webtorrent "$magnet" --mpv
-
-# Simple notification
-notify-send "🎥 Enjoy Watching ☺️ " -i "NONE"
+# C'est parti mon kiki
+webtorrent "$magnet" --vlc
