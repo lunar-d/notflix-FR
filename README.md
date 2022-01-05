@@ -1,4 +1,4 @@
-<h1 align="center">NOTFLIX Baguette 🇫🇷🥖</h1>
+<h1 align="center">NOTFLIX Baguette 🇫🇷🥖 - Powershell</h1>
 <p align="center">Utiliser la version française de notflix pour voir les prochains films avec Kev Adams 🍷</p>
 
 ##

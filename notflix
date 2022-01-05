@@ -1,78 +1,192 @@
-#!/bin/sh
+# Les dependences - webtorrent, BurntToast, nodejs
+[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+Import-Module BurntToast
 
-# Les dependences - webtorrent, dmenu, libxml
-
-mkdir -p $HOME/.cache/notflix-fr
+#New-Item -ItemType Directory -Force -Path $env:TEMP/notflix-fr | out-null
 
 # Marre des changements de domaine... je le recup ici
-updatedomain=$(curl -s "https://supports-oxtorrent.com" | grep -o '<span style="color:red;">.*</span>' | sed 's/<[^>]*>//g')
+$fallbackdomain = "oxtorrent.be"
+$torrentdomainsource = (Invoke-WebRequest -URI "https://supports-oxtorrent.com")
+$domain = $torrentdomainsource.AllElements | Where-Object {$_.tagName -eq "SPAN"} | Where-Object {$_.style -eq "COLOR: red"}
+if($null -eq $domain){$domain=$fallbackdomain}
+$baseurl = "https://www."+$domain.innerText
+$query = ""
 
-menu="dmenu -i -l 25"
-baseurl="https://www.$updatedomain"
-cachedir="$HOME/.cache/notflix-fr"
-useragent="Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0"
+#Demande recherche (sauf si deja donné en argument)
+if ( !$args[0] ){
+[xml]$XAMLMain = @'
+<Window
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	Title="notdmenu"
+	Name="notdmenu"
+	SizeToContent="Height"
+	Top="0"
+	Left="0"
+	Width="{x:Static SystemParameters.PrimaryScreenWidth}"
+	ResizeMode="NoResize"
+	WindowStyle="None"
+	AllowsTransparency="True"
+	Topmost="true"
+	FocusManager.FocusedElement="{Binding ElementName=searchquerry}"
+	>
+	<Grid>
+	<Grid.ColumnDefinitions>
+		<ColumnDefinition Width="Auto" />
+		<ColumnDefinition />
+	</Grid.ColumnDefinitions>
+	<TextBlock Text="Recherche 📽:" FontSize="24" Foreground="CornflowerBlue" />
+	<TextBox Name="searchquerry" AutomationProperties.Name="simple TextBox" Text="" FontSize="24" Grid.Column="1" />
+	</Grid>
+</Window>
+'@
+$XamlLoader=(New-Object System.Xml.XmlNodeReader $XAMLMain)
+$Form=[Windows.Markup.XamlReader]::Load( $XamlLoader )
 
-if [ -z $1 ]; then
-  query=$(dmenu -p "Recherche 📽: " <&-)
-else
-  query=$1
-fi
+$Textbox = $Form.findname("searchquerry")
 
-query="$(echo $query | sed 's/ /+/g')"
-curl -A $useragent -s $baseurl/recherche/$query > $cachedir/tmp.html
+$code = {
+    [System.Windows.Input.KeyEventArgs]$e = $args[1]
+    if ($e.Key -eq 'ESC')
+    {
+        $Form.Close()
+        New-BurntToastNotification -Text "Notflix",  "A la prochaine..."
+        exit
+    }
+    if ($e.Key -eq 'Return')
+    {
+        $script:query = $Textbox.Text.ToString()
+        $Form.Close()
+    }
 
-# je recup que la table des torrents
-xmllint --html --xpath '//tr' $cachedir/tmp.html > $cachedir/tmplinks.html 2>/dev/null
+}
+
+$null = $Form.add_KeyUp($code)
+
+$Form.ShowDialog() | out-null
+}
+else{
+    Write-Output "The condition was false"
+}
+
+$query = $query.replace(' ', '+')
+
+# recup la page
+# curl -A $useragent -s $baseurl/recherche/$query > $cachedir/tmp.html
+$page = (Invoke-WebRequest -URI $baseurl"/recherche/"$query)
+$torrentstags = $page.AllElements | Where-Object {$_.tagName -eq "tr"} | Where-Object {$_.innerHTML -match 'href=(")\/torrent\/.*<\/(A|a)>'}
 
 # Les titres
-grep -o '<a href="/torrent/.*</a>' $cachedir/tmplinks.html |
-  sed 's/<[^>]*>//g' > $cachedir/titles.bw
+$titles = $torrentstags.innerText
 
-result_count=$(wc -l $cachedir/titles.bw | awk '{print $1}')
-if [ "$result_count" -lt 1 ]; then
-  notify-send "😔 Pas de torrents disponibles correspondant à votre recherche." -i "NONE"
-  exit 0
-fi
-
-# Seeders / Leechers
-grep -o '<td .* alt="seeders"/>.*</td>\|<td .* alt="leechers"/>.*</td>' $cachedir/tmplinks.html |
-  sed 's/<[^>]*>//g' | sed 'N;s/\n/ /' > $cachedir/seedleech.bw
-
-# La taille du fichier
-grep -o '<td width="11%" align="left">.*</td>' $cachedir/tmplinks.html |
-  sed 's/<span class="seeds">.*<\/span>//g' |
-  sed -e 's/<[^>]*>//g' > $cachedir/size.bw
+if ($titles.Length -ieq 0){
+    New-BurntToastNotification -Text "Notflix", "😔 Pas de torrents disponibles correspondant à votre recherche."
+    exit
+}
 
 # Les liens
-grep -E '/torrent/' $cachedir/tmplinks.html > $cachedir/links.html
-xmllint --html --xpath '//a/@href' $cachedir/links.html > $cachedir/linkshref.bw 2>/dev/null
-sed 's/ href=//g' $cachedir/linkshref.bw | sed 's/"//g' > $cachedir/links.bw
+$links = @()
+$torrentstags.innerHTML | ForEach-Object {
+    $Regex = [Regex]::new('(?<=href=")\/torrent\/.*(?=")')           
+    $Match = $Regex.Match($_)           
+    if($Match.Success)           
+    {           
+       $links += $Match.Value       
+    }
+}
 
-# Nettoyage de certaines informations à afficher
-sed 's/\./ /g; s/\-/ /g' $cachedir/titles.bw |
-  sed 's/[^A-Za-z0-9 ]//g' | tr -s " " > $cachedir/tmp && mv $cachedir/tmp $cachedir/titles.bw
+[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+[xml]$XAMLNext = @'
+<Window
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	Title="notdmenu"
+	Name="notdmenu"
+	SizeToContent="Height"
+	Top="0"
+	Left="0"
+	Width="{x:Static SystemParameters.PrimaryScreenWidth}"
+	ResizeMode="NoResize"
+	WindowStyle="None"
+	AllowsTransparency="True"
+	Topmost="true"
+	FocusManager.FocusedElement="{Binding ElementName=searchquerry}"
+	>
+    
+    <StackPanel Orientation="Vertical">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Text="" FontSize="24" Foreground="CornflowerBlue" Grid.Column="0" Grid.Row="0" />
+            <TextBox Name="searchquerry" AutomationProperties.Name="simple TextBox" Text="" FontSize="24" Grid.Column="1" />
+        </Grid>
+        <Grid Background="blue">
+            <ListBox Name="resultlist" MinHeight = "50" AllowDrop="True" SelectionMode="Extended" Width="Auto">
+            </ListBox>
+        </Grid>
+    </StackPanel>
+</Window>
+'@
+$XamlLoader=(New-Object System.Xml.XmlNodeReader $XAMLNext)
+$Form=[Windows.Markup.XamlReader]::Load( $XamlLoader )
 
-awk '{print NR " - ["$0"]"}' $cachedir/size.bw > $cachedir/tmp && mv $cachedir/tmp $cachedir/size.bw
-awk '{print "[S:"$1 ", L:"$2"]" }' $cachedir/seedleech.bw > $cachedir/tmp && mv $cachedir/tmp $cachedir/seedleech.bw
+$queryBox = $Form.FindName('searchquerry')
+$listBox = $Form.findname('resultlist')
 
-# Getting the line number
-LINE=$(paste -d\   $cachedir/size.bw $cachedir/seedleech.bw $cachedir/titles.bw |
-  $menu |
-  cut -d\- -f1 |
-  awk '{$1=$1; print}')
+$titles | ForEach-Object {$listbox.Items.Add($_)} | out-null
 
-if [ -z "$LINE" ]; then
-  notify-send "A la prochaine..." -i "NONE"
-  exit 0
-fi
-notify-send "🔍 Recherche du lien Magnet et lancement." -i "NONE"
-url=$(head -n $LINE $cachedir/links.bw | tail -n +$LINE)
-fullURL="${baseurl}${url}"
+$code = {
+    [System.Windows.Input.KeyEventArgs]$e = $args[1]
+    if ($e.Key -eq 'ESC')
+    {
+        $Form.Close()
+        New-BurntToastNotification -Text "Notflix",  "A la prochaine..."
+        exit
+    }
+    if ($e.Key -eq 'Return')
+    {
+        $script:titleSelected = $listbox.SelectedItems
+        $Form.Close()
+    }
+}
+
+$filter = {
+    $listbox.Items.Clear();
+    $titlesfil = $titles | Where-Object {$_ -match '.*(' +$queryBox.Text+').*'}
+    $titlesfil | ForEach-Object {$listbox.Items.Add($_) | out-null}
+}
+
+$Form.add_KeyUp($code)
+$queryBox.add_TextChanged($filter)
+$listbox.Add_SelectionChanged({
+    $script:titleSelected = $listbox.SelectedItems
+})
+
+$Form.ShowDialog() | out-null
+$titleSelectedIndex = [array]::FindIndex($titles,[Predicate[String]]{param($s)$s -eq $titleSelected})
+
+New-BurntToastNotification -Text "Notflix", "🔍 Recherche du lien Magnet et lancement."
+$url=$links[$titleSelectedIndex]
+$fullURL= $baseurl+$url
 
 # Recherche du lien magnet
-echo $fullURL
-curl -A "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/81.0" -s $fullURL > $cachedir/tmpmagnet.html
-magnet=$(grep -Po "magnet:\?xt=urn:btih:[0-9a-fA-F]{40,}.*(?=';)" $cachedir/tmpmagnet.html | head -n 1) 
+$pageTorrent = (Invoke-WebRequest -URI $fullURL)
+
+$Regex = [Regex]::new("magnet:\?xt=urn:btih:[0-9a-fA-F]{40,}.*(?=';)")           
+$Match = $Regex.Match($pageTorrent.Content)           
+if($Match.Success)           
+{           
+    $magnet = $Match.Value   
+}
+
+$magnet | Set-Clipboard
+New-BurntToastNotification -Text "Notflix", "Lien dans le presse-papier."
 
 # C'est parti mon kiki
-webtorrent "$magnet" --vlc
+WebTorrent $magnet --vlc
