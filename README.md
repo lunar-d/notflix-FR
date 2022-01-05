@@ -22,6 +22,16 @@ Pour l'extraction, le script utilise des utilitaires gnu simples (sed, awk, past
 
 ## L'Installation
 
+### Les dépendances
+Avec [Chocolatey](https://chocolatey.org) installer Node.js / git / vlc
+```sh
+choco install nodejs git.install vlc
+```
+Puis avec Npm Webtorrent-cli
+```sh
+npm install webtorrent-cli -g
+```
+
 ### Avec Start-BitsTransfer
 Télécharger **notflix-fr** avec Start-BitsTransfer et ajouter le dans votre **$env:PATH** et autoriser l'exécution des script.
 
