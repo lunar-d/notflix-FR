@@ -1,6 +1,6 @@
 # Les dependences - webtorrent, BurntToast, nodejs
 [void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-Import-Module BurntToast
+# Import-Module BurntToast
 
 #New-Item -ItemType Directory -Force -Path $env:TEMP/notflix-fr | out-null
 
@@ -50,7 +50,7 @@ $code = {
     if ($e.Key -eq 'ESC')
     {
         $Form.Close()
-        New-BurntToastNotification -Text "Notflix",  "A la prochaine..."
+        # New-BurntToastNotification -Text "Notflix",  "A la prochaine..."
         exit
     }
     if ($e.Key -eq 'Return')
@@ -80,7 +80,7 @@ $torrentstags = $page.AllElements | Where-Object {$_.tagName -eq "tr"} | Where-O
 $titles = $torrentstags.innerText
 
 if ($titles.Length -ieq 0){
-    New-BurntToastNotification -Text "Notflix", "Pas de torrents disponibles correspondant à votre recherche."
+    # New-BurntToastNotification -Text "Notflix", "Pas de torrents disponibles correspondant à votre recherche."
     exit
 }
 
@@ -146,7 +146,7 @@ $code = {
     if ($e.Key -eq 'ESC')
     {
         $Form.Close()
-        New-BurntToastNotification -Text "Notflix",  "A la prochaine..."
+        # New-BurntToastNotification -Text "Notflix",  "A la prochaine..."
         exit
     }
     if ($e.Key -eq 'Return')
@@ -171,7 +171,7 @@ $listbox.Add_SelectionChanged({
 $Form.ShowDialog() | out-null
 $titleSelectedIndex = [array]::FindIndex($titles,[Predicate[String]]{param($s)$s -eq $titleSelected})
 
-New-BurntToastNotification -Text "Notflix", "Recherche du lien Magnet et lancement."
+# New-BurntToastNotification -Text "Notflix", "Recherche du lien Magnet et lancement."
 $url=$links[$titleSelectedIndex]
 $fullURL= $baseurl+$url
 
@@ -186,7 +186,7 @@ if($Match.Success)
 }
 
 $magnet | Set-Clipboard
-New-BurntToastNotification -Text "Notflix", "Lien dans le presse-papier."
+# New-BurntToastNotification -Text "Notflix", "Lien dans le presse-papier."
 
 # C'est parti mon kiki
 WebTorrent $magnet --vlc

@@ -17,7 +17,6 @@ Pour l'extraction, le script utilise des utilitaires gnu simples (sed, awk, past
 ## Les trucs nécessaires
 
 * [webtorrent-cli](https://webtorrent.io) - Un client de streaming peer-to-peer.
-* [BurntToast](https://github.com/Windos/BurntToast) - Pour afficher les notifications.
 * Avoir deja lancer internet explorer...
 * [Du pain](https://youtu.be/biRzNHnvoC0?t=22)...
 
@@ -27,7 +26,7 @@ Pour l'extraction, le script utilise des utilitaires gnu simples (sed, awk, past
 Télécharger **notflix-fr** avec Start-BitsTransfer et ajouter le dans votre **$env:PATH** et autoriser l'exécution des script.
 
 ```sh
-Start-BitsTransfer "https://raw.githubusercontent.com/lunar-d/notflix-FR/win32/notflix" -Destination "~\notflix-fr.ps1"
+Start-BitsTransfer "https://raw.githubusercontent.com/lunar-d/notflix-FR/win32/notflix" -Destination "~\AppData\Local\Microsoft\WindowsApps\notflix-fr.ps1"
 Set-ExecutionPolicy RemoteSigned -scope CurrentUser
 ```
 - Pour désinstaller, supprimez simplement `notflix-fr.ps1`.
