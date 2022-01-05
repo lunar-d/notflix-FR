@@ -35,7 +35,7 @@ if ( !$args[0] ){
 		<ColumnDefinition Width="Auto" />
 		<ColumnDefinition />
 	</Grid.ColumnDefinitions>
-	<TextBlock Text="Recherche 📽:" FontSize="24" Foreground="CornflowerBlue" />
+	<TextBlock Text="Recherche :" FontSize="24" Foreground="CornflowerBlue" />
 	<TextBox Name="searchquerry" AutomationProperties.Name="simple TextBox" Text="" FontSize="24" Grid.Column="1" />
 	</Grid>
 </Window>
@@ -80,7 +80,7 @@ $torrentstags = $page.AllElements | Where-Object {$_.tagName -eq "tr"} | Where-O
 $titles = $torrentstags.innerText
 
 if ($titles.Length -ieq 0){
-    New-BurntToastNotification -Text "Notflix", "😔 Pas de torrents disponibles correspondant à votre recherche."
+    New-BurntToastNotification -Text "Notflix", "Pas de torrents disponibles correspondant à votre recherche."
     exit
 }
 
@@ -171,7 +171,7 @@ $listbox.Add_SelectionChanged({
 $Form.ShowDialog() | out-null
 $titleSelectedIndex = [array]::FindIndex($titles,[Predicate[String]]{param($s)$s -eq $titleSelected})
 
-New-BurntToastNotification -Text "Notflix", "🔍 Recherche du lien Magnet et lancement."
+New-BurntToastNotification -Text "Notflix", "Recherche du lien Magnet et lancement."
 $url=$links[$titleSelectedIndex]
 $fullURL= $baseurl+$url
 
