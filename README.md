@@ -10,7 +10,7 @@
 
 ### Mais Jamy comment ça marche ?
 
-C’est simple, il s’agit un script shell. Il extrait les infos de **oxtorrent** et trouve le lien *magnet*.
+C’est simple, il s’agit un script shell. Il extrait les infos de **Torrent9** et trouve le lien *magnet*.
 Ensuite, il utilise [webtorrent](https://webtorrent.io/) pour diffuser la vidéo à partir du lien.
 Pour l'extraction, le script utilise des utilitaires gnu simples (sed, awk, paste, cut) mais aussi xmllint.
 
