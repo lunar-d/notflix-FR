@@ -5,7 +5,7 @@
 mkdir -p $HOME/.cache/notflix-fr
 
 # Marre des changements de domaine... je le recup ici
-updatedomain=$(curl -s "https://supports-oxtorrent.com" | grep -o '<span style="color:red;">.*</span>' | sed 's/<[^>]*>//g')
+updatedomain="torrent9.nl"
 
 menu="dmenu -i -l 25"
 baseurl="https://www.$updatedomain"
